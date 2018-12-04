@@ -70,9 +70,29 @@ public class HuffProcessor {
 		
 	}
 
+	/**
+	 * @param root  root node of the encoding tree
+	 * @return  String[] of all the character encodings
+	 */
 	private String[] makeCodingsFromTree(HuffNode root) {
-		// TODO Auto-generated method stub
-		return null;
+		String[] encodings = new String[ALPH_SIZE + 1];
+		return treeRecursion(root, "", encodings);
+	}
+	
+	/**
+	 * @param root starting root from the tree
+	 * @param path String of the path taken so far
+	 * @param encodings   String[] of the paths for each character
+	 * @return String[] of the encoding paths
+	 * preorder traversal of the encoding tree and finds all the path associated with each character
+	 */
+	private String[] treeRecursion(HuffNode root, String path, String[] encodings) {
+		if(root.myLeft == null && root.myRight == null) {
+			encodings[root.myValue] = path;
+		}
+		treeRecursion(root.myLeft, path + "0", encodings);
+		treeRecursion(root.myRight, path + "1", encodings);
+		return encodings;
 	}
 
 	/**
