@@ -61,7 +61,13 @@ public class HuffProcessor {
 		out.close();
 	}
 	private void writeCompressedBits(String[] codings, BitInputStream in, BitOutputStream out) {
-		// TODO Auto-generated method stub
+		while(true) {
+			String code = codings[in.readBits(BITS_PER_WORD)];
+			if(code == null) break;		//TODO probs won't work but hey, why not give it a go
+			out.writeBits(code.length(), Integer.parseInt(code,2));
+		}
+		String code = codings[PSEUDO_EOF];
+		out.writeBits(code.length(), Integer.parseInt(code, 2));
 		
 	}
 
