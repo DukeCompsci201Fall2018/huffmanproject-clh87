@@ -1,3 +1,4 @@
+import java.util.PriorityQueue;
 
 /**
  * Although this class has a history of several years,
@@ -74,11 +75,35 @@ public class HuffProcessor {
 		return null;
 	}
 
+	/**
+	 * 
+	 * @param counts   integer array of frequencie with the character as the index
+	 * @return root of the created trie
+	 * creates a HuffNode for every nonzero frequency entry, adds it to a priority queue
+	 * repeatedly creates a new tree from the two smallest weight nodes, summing their weights
+	 * until finally returning one node with all the subtrees
+	 */
 	private HuffNode makeTreeFromCounts(int[] counts) {
-		// TODO Auto-generated method stub
-		return null;
+		PriorityQueue<HuffNode> pq = new PriorityQueue<>();
+		
+		for(int k = 0; k < counts.length; k++) {
+			if(counts[k] == 0) continue;
+			pq.add(new HuffNode(k, counts[k], null, null));	//creates a priority queue with every nonzero frequency
+		}
+		while(pq.size() > 1) {
+			HuffNode left = pq.remove();
+			HuffNode right = pq.remove();
+			HuffNode t = new HuffNode(0, left.myWeight + right.myWeight, left, right);	//create a new tree with summed weights
+			pq.add(t);
+		}
+		return pq.remove(); //return the last node, the root of the created tree
 	}
 
+	/**
+	 * @param in   Bit input stream
+	 * @return integer array with index = character and value of character frequency
+	 * creates and returns an array of character frequencies
+	 */
 	private int[] readForCounts(BitInputStream in) {
 		int[] all = new int[ALPH_SIZE+1];
 		while(true) {
