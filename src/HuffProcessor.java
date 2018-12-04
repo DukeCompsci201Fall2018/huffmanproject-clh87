@@ -91,6 +91,7 @@ public class HuffProcessor {
 					if(current.myValue == PSEUDO_EOF) break;
 					else {
 						output.writeBits(BITS_PER_WORD, current.myValue);
+						current = root;	//starts back at the beginning of the tree
 					}
 				}
 				
