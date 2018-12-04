@@ -76,44 +76,52 @@ public class HuffProcessor {
 		out.close();
 	}
 
+	/**
+	 * @param root  HuffNode that's the root to the tree
+	 * @param input Bit input stream
+	 * @param output Bit output stream
+	 * takes the input bitstream and traverses the tree to decompress the file
+	 */
 	private void readCompressedBits(HuffNode root, BitInputStream input, BitOutputStream output) {
 		HuffNode current = root;
 		while(true) {
-			int bits = input.readBits(1);
+			int bits = input.readBits(1);	//read the next bit - acts like a scanner
 			if(bits == -1) {
 				throw new HuffException("bad input, no PSEUDO_EOF");
 			}
 			else {
-				if(bits == 0) current = current.myLeft;
+				if(bits == 0) current = current.myLeft;	//traverses the tree
 				else current = current.myRight;
 				
 				if(current.myLeft == null && current.myRight == null) {	//checking that it's a leaf node
 					if(current.myValue == PSEUDO_EOF) break;
 					else {
-						output.writeBits(BITS_PER_WORD, current.myValue);
+						output.writeBits(BITS_PER_WORD, current.myValue);	//adds the next 8 bits to code myValue
 						current = root;	//starts back at the beginning of the tree
 					}
 				}
-				
 			}
 		}
-		
 	}
 
+	/**
+	 * @param in   input bitstream
+	 * @return HuffNode root of the constructed header tree
+	 */
 	private HuffNode readTreeHeader(BitInputStream in) {
-		int bit = in.readBits(1);		//worried that it'll just read the first bit everytime
+		int bit = in.readBits(1);		//reads the next bit
 		if(bit == -1) {
 			throw new HuffException("illegal bit");
 		}
 		if(bit == 0) {
-			HuffNode left = readTreeHeader(in);
-			HuffNode right = readTreeHeader(in);
+			HuffNode left = readTreeHeader(in);	//recursive call to the left
+			HuffNode right = readTreeHeader(in);	//recursive call to the right
 			
-			return new HuffNode(0, 0, left, right);
+			return new HuffNode(0, 0, left, right);	//returns an interior node
 		}
 		else {
-			int letterBits = in.readBits(BITS_PER_WORD + 1);
-			return new HuffNode(letterBits, 0, null, null);
+			int letterBits = in.readBits(BITS_PER_WORD + 1);	//takes 9 bits assigned to the character stored in the node
+			return new HuffNode(letterBits, 0, null, null);		//returns a leaf node
 		}
 	}
 }
