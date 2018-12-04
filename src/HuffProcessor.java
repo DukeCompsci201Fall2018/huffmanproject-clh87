@@ -87,7 +87,7 @@ public class HuffProcessor {
 				if(bits == 0) current = current.myLeft;
 				else current = current.myRight;
 				
-				if(current.myValue != 0) {	//checking that it's a leaf node
+				if(current.myLeft == null && current.myRight == null) {	//checking that it's a leaf node
 					if(current.myValue == PSEUDO_EOF) break;
 					else {
 						output.writeBits(BITS_PER_WORD, current.myValue);
