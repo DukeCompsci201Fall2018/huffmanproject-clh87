@@ -65,9 +65,21 @@ public class HuffProcessor {
 		
 	}
 
+	/**
+	 * @param root  root node of the encoding tree
+	 * @param out   output bitstream
+	 * writes the encoding tree to the output bitstream with a "0" indicating an internal node and a "1"
+	 * indicating a leaf node followed by 9 bits for the character
+	 */
 	private void writeHeader(HuffNode root, BitOutputStream out) {
-		// TODO Auto-generated method stub
-		
+		if(root.myLeft == null && root.myRight == null) {		//base case-it's a leaf node
+			out.writeBits(1, 0);	//writes the 1 cueing it being a leaf node
+			out.writeBits(BITS_PER_WORD + 1, root.myValue);	//write the 9 (cuz of PSEUDO possible 257) character bits
+			return;
+		}
+		out.writeBits(1, 0);	//write the 0, cueing an internal node
+		writeHeader(root.myLeft, out);	//recursive call for pre-order traversal
+		writeHeader(root.myRight, out);
 	}
 
 	/**
@@ -206,7 +218,7 @@ public class HuffProcessor {
 			return new HuffNode(0, 0, left, right);	//returns an interior node
 		}
 		else {
-			int letterBits = in.readBits(BITS_PER_WORD + 1);	//takes 9 bits assigned to the character stored in the node
+			int letterBits = in.readBits(BITS_PER_WORD + 1);	//takes 9 bits assigned to the character stored in the node - 9 because possibly 257 cuz of PSEUDO character
 			return new HuffNode(letterBits, 0, null, null);		//returns a leaf node
 		}
 	}
