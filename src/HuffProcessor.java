@@ -62,8 +62,9 @@ public class HuffProcessor {
 	}
 	private void writeCompressedBits(String[] codings, BitInputStream in, BitOutputStream out) {
 		while(true) {
-			String code = codings[in.readBits(BITS_PER_WORD)];
-			if(code == null) break;		//TODO probs won't work but hey, why not give it a go
+			int currentBit = in.readBits(BITS_PER_WORD);
+			if(currentBit == -1) break;	//end of bitstream so exit while loop
+			String code = codings[currentBit];
 			out.writeBits(code.length(), Integer.parseInt(code,2));
 		}
 		String code = codings[PSEUDO_EOF];
@@ -107,6 +108,7 @@ public class HuffProcessor {
 	private String[] treeRecursion(HuffNode root, String path, String[] encodings) {
 		if(root.myLeft == null && root.myRight == null) {
 			encodings[root.myValue] = path;
+			return encodings;
 		}
 		treeRecursion(root.myLeft, path + "0", encodings);
 		treeRecursion(root.myRight, path + "1", encodings);
