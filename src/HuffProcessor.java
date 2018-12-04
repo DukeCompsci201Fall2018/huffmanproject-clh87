@@ -42,13 +42,54 @@ public class HuffProcessor {
 	 */
 	public void compress(BitInputStream in, BitOutputStream out){
 
-		while (true){
-			int val = in.readBits(BITS_PER_WORD);
-			if (val == -1) break;
-			out.writeBits(BITS_PER_WORD, val);
-		}
+//		while (true){
+//			int val = in.readBits(BITS_PER_WORD);
+//			if (val == -1) break;
+//			out.writeBits(BITS_PER_WORD, val);
+//		}
+//		out.close();
+		int[] counts = readForCounts(in);
+		HuffNode root = makeTreeFromCounts(counts);
+		String[] codings = makeCodingsFromTree(root);
+		
+		out.writeBits(BITS_PER_INT, HUFF_TREE);
+		writeHeader(root, out);
+		
+		in.reset();
+		writeCompressedBits(codings, in, out);
 		out.close();
 	}
+	private void writeCompressedBits(String[] codings, BitInputStream in, BitOutputStream out) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void writeHeader(HuffNode root, BitOutputStream out) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private String[] makeCodingsFromTree(HuffNode root) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private HuffNode makeTreeFromCounts(int[] counts) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private int[] readForCounts(BitInputStream in) {
+		int[] all = new int[ALPH_SIZE+1];
+		while(true) {
+			int bits = in.readBits(BITS_PER_WORD);
+			if(bits == -1) break;
+			all[bits] += 1;
+		}
+		all[PSEUDO_EOF] = 1;
+		return all;
+	}
+
 	/**
 	 * Decompresses a file. Output file must be identical bit-by-bit to the
 	 * original.
