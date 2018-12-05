@@ -248,7 +248,7 @@ public class HuffProcessor {
 		}
 	}
 	
-	void printTree (HuffNode node)
+/*	void printTree (HuffNode node)
 	{
 		if(node==null)
 			return;
@@ -257,5 +257,5 @@ public class HuffProcessor {
 		printTree (node.myLeft);
 		printTree (node.myRight);
 		
-	}
+	}*/
 }
