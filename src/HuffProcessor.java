@@ -21,14 +21,14 @@ public class HuffProcessor {
 	public static final int HUFF_TREE  = HUFF_NUMBER | 1;
 
 	private final int myDebugLevel;
-	
+
 	public static final int DEBUG_HIGH = 4;
 	public static final int DEBUG_LOW = 1;
-	
+
 	public HuffProcessor() {
 		this(0);
 	}
-	
+
 	public HuffProcessor(int debug) {
 		myDebugLevel = debug;
 	}
@@ -43,33 +43,44 @@ public class HuffProcessor {
 	 */
 	public void compress(BitInputStream in, BitOutputStream out){
 
-//		while (true){
-//			int val = in.readBits(BITS_PER_WORD);
-//			if (val == -1) break;
-//			out.writeBits(BITS_PER_WORD, val);
-//		}
-//		out.close();
+		//		while (true){
+		//			int val = in.readBits(BITS_PER_WORD);
+		//			if (val == -1) break;
+		//			out.writeBits(BITS_PER_WORD, val);
+		//		}
+		//		out.close();
 		int[] counts = readForCounts(in);
 		HuffNode root = makeTreeFromCounts(counts);
 		String[] codings = makeCodingsFromTree(root);
 		
+		printTree(root);
+
 		out.writeBits(BITS_PER_INT, HUFF_TREE);
 		writeHeader(root, out);
-		
+
 		in.reset();
 		writeCompressedBits(codings, in, out);
 		out.close();
 	}
+
+	/**
+	 * @param codings   String[] of all the character encodings
+	 * @param in	input bitstream
+	 * @param out	output bitstream
+	 * Write all the bits corresponding to each input bit into the output bitstream
+	 */
 	private void writeCompressedBits(String[] codings, BitInputStream in, BitOutputStream out) {
+		System.out.println("writeCompressed output stream");
 		while(true) {
 			int currentBit = in.readBits(BITS_PER_WORD);
-			if(currentBit == -1) break;	//end of bitstream so exit while loop
+			if(currentBit == -1) break;
+
+
 			String code = codings[currentBit];
 			out.writeBits(code.length(), Integer.parseInt(code,2));
-		}
+		}	
 		String code = codings[PSEUDO_EOF];
 		out.writeBits(code.length(), Integer.parseInt(code, 2));
-		
 	}
 
 	/**
@@ -79,8 +90,9 @@ public class HuffProcessor {
 	 * indicating a leaf node followed by 9 bits for the character
 	 */
 	private void writeHeader(HuffNode root, BitOutputStream out) {
+		if(root == null) return;
 		if(root.myLeft == null && root.myRight == null) {		//base case-it's a leaf node
-			out.writeBits(1, 0);	//writes the 1 cueing it being a leaf node
+			out.writeBits(1, 1);	//writes the 1 cueing it being a leaf node
 			out.writeBits(BITS_PER_WORD + 1, root.myValue);	//write the 9 (cuz of PSEUDO possible 257) character bits
 			return;
 		}
@@ -95,9 +107,10 @@ public class HuffProcessor {
 	 */
 	private String[] makeCodingsFromTree(HuffNode root) {
 		String[] encodings = new String[ALPH_SIZE + 1];
-		return treeRecursion(root, "", encodings);
+		treeRecursion(root, "", encodings);
+		return encodings;
 	}
-	
+
 	/**
 	 * @param root starting root from the tree
 	 * @param path String of the path taken so far
@@ -105,19 +118,19 @@ public class HuffProcessor {
 	 * @return String[] of the encoding paths
 	 * preorder traversal of the encoding tree and finds all the path associated with each character
 	 */
-	private String[] treeRecursion(HuffNode root, String path, String[] encodings) {
+	private void treeRecursion(HuffNode root, String path, String[] encodings) {
 		if(root.myLeft == null && root.myRight == null) {
 			encodings[root.myValue] = path;
-			return encodings;
+			return;
 		}
 		treeRecursion(root.myLeft, path + "0", encodings);
 		treeRecursion(root.myRight, path + "1", encodings);
-		return encodings;
+		return;
 	}
 
 	/**
 	 * 
-	 * @param counts   integer array of frequencie with the character as the index
+	 * @param counts   integer array of frequencies with the character as the index
 	 * @return root of the created trie
 	 * creates a HuffNode for every nonzero frequency entry, adds it to a priority queue
 	 * repeatedly creates a new tree from the two smallest weight nodes, summing their weights
@@ -125,7 +138,7 @@ public class HuffProcessor {
 	 */
 	private HuffNode makeTreeFromCounts(int[] counts) {
 		PriorityQueue<HuffNode> pq = new PriorityQueue<>();
-		
+
 		for(int k = 0; k < counts.length; k++) {
 			if(counts[k] == 0) continue;
 			pq.add(new HuffNode(k, counts[k], null, null));	//creates a priority queue with every nonzero frequency
@@ -152,8 +165,10 @@ public class HuffProcessor {
 			all[bits] += 1;
 		}
 		all[PSEUDO_EOF] = 1;
+		//System.out.println("readForCounts has at EOF" + all[PSEUDO_EOF]);
 		return all;
 	}
+
 
 	/**
 	 * Decompresses a file. Output file must be identical bit-by-bit to the
@@ -166,17 +181,17 @@ public class HuffProcessor {
 	 */
 	public void decompress(BitInputStream in, BitOutputStream out){
 
-//		while (true){
-//			int val = in.readBits(BITS_PER_WORD);
-//			if (val == -1) break;
-//			out.writeBits(BITS_PER_WORD, val);
-//		}
-//		out.close();
+		//		while (true){
+		//			int val = in.readBits(BITS_PER_WORD);
+		//			if (val == -1) break;
+		//			out.writeBits(BITS_PER_WORD, val);
+		//		}
+		//		out.close();
 		int bits = in.readBits(BITS_PER_INT);
 		if(bits != HUFF_TREE) {
 			throw new HuffException("illegal header starts with "+bits);
 		}
-		
+
 		HuffNode root = readTreeHeader(in);
 		readCompressedBits(root, in, out);
 		out.close();
@@ -192,13 +207,14 @@ public class HuffProcessor {
 		HuffNode current = root;
 		while(true) {
 			int bits = input.readBits(1);	//read the next bit - acts like a scanner
+			//System.out.println(bits);
 			if(bits == -1) {
 				throw new HuffException("bad input, no PSEUDO_EOF");
 			}
 			else {
 				if(bits == 0) current = current.myLeft;	//traverses the tree
 				else current = current.myRight;
-				
+
 				if(current.myLeft == null && current.myRight == null) {	//checking that it's a leaf node
 					if(current.myValue == PSEUDO_EOF) break;
 					else {
@@ -222,12 +238,24 @@ public class HuffProcessor {
 		if(bit == 0) {
 			HuffNode left = readTreeHeader(in);	//recursive call to the left
 			HuffNode right = readTreeHeader(in);	//recursive call to the right
-			
+
 			return new HuffNode(0, 0, left, right);	//returns an interior node
 		}
 		else {
 			int letterBits = in.readBits(BITS_PER_WORD + 1);	//takes 9 bits assigned to the character stored in the node - 9 because possibly 257 cuz of PSEUDO character
+			//if(letterBits == PSEUDO_EOF) System.out.println("readTreeHeader has Pseudo in a leaf node");
 			return new HuffNode(letterBits, 0, null, null);		//returns a leaf node
 		}
+	}
+	
+	void printTree (HuffNode node)
+	{
+		if(node==null)
+			return;
+		if(node.myLeft==null&node.myRight==null)
+			if(node.myValue == PSEUDO_EOF) System.out.println(node.myValue);
+		printTree (node.myLeft);
+		printTree (node.myRight);
+		
 	}
 }
